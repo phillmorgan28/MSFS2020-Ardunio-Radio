@@ -10,26 +10,38 @@
 
 /////////////////////////////////////////////////////////////////
 
-#define ROTARY_PIN1	9
-#define ROTARY_PIN2	10
-#define BUTTON_PIN	7
-#define CLICKS_PER_STEP   4   // this number depends on your rotary encoder 
+#define COM_ROTARY_PIN1	9
+#define COM_ROTARY_PIN2	10
+#define COM_BUTTON_PIN	7
+#define COM_XFER_BUTTON_PIN 12
 
-#define XFER_BUTTON_PIN  12
-#define MINOR_BUTTON_PIN  11
+#define NAV_ROTARY_PIN1	5
+#define NAV_ROTARY_PIN2	6
+#define NAV_BUTTON_PIN	3
+#define NAV_XFER_BUTTON_PIN 11
+
+#define CLICKS_PER_STEP 4
+
 
 /////////////////////////////////////////////////////////////////
 
 AltSoftSerial altSerial;
 
-ESPRotary rotary = ESPRotary(ROTARY_PIN1, ROTARY_PIN2, CLICKS_PER_STEP);
-Button2 rotaryButton = Button2(BUTTON_PIN);
-Button2 xferButton = Button2(XFER_BUTTON_PIN);
-Button2 majorMinorButton = Button2(MINOR_BUTTON_PIN);
+ESPRotary com_rotary = ESPRotary(COM_ROTARY_PIN1, COM_ROTARY_PIN2, CLICKS_PER_STEP);
+Button2 com_rotaryButton = Button2(COM_BUTTON_PIN);
+Button2 com_xferButton = Button2(COM_XFER_BUTTON_PIN);
+
+ESPRotary nav_rotary = ESPRotary(NAV_ROTARY_PIN1, NAV_ROTARY_PIN2, CLICKS_PER_STEP);
+Button2 nav_rotaryButton = Button2(NAV_BUTTON_PIN);
+Button2 nav_xferButton = Button2(NAV_XFER_BUTTON_PIN);
+
 LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
-static int previousPosition = 0;
-static int majorPostion = true;
+static int comPreviousPosition = 0;
+static int comMajorPostion = true;
+
+static int navPreviousPosition = 0;
+static int navMajorPostion = true;
 
 char messageBuffer[80];
 
@@ -37,35 +49,30 @@ char messageBuffer[80];
 
 void setup() {
   Serial.begin(9600);
-  altSerial.begin(9600);   // to AltSoftSerial RX
+  altSerial.begin(9600);
   
-  rotary.setChangedHandler(rotate);
-  rotary.setLeftRotationHandler(downClick);
-  rotary.setRightRotationHandler(upClick);
+  com_rotary.setChangedHandler(comRotate);
+  com_rotaryButton.setTapHandler(comMajorMinor);
+  com_xferButton.setTapHandler(comXfer);
 
-  rotaryButton.setTapHandler(majorMinor);
-  majorMinorButton.setTapHandler(majorMinor);
-  xferButton.setTapHandler(xfer);
-  //b.setLongClickHandler(resetPosition);
+  nav_rotary.setChangedHandler(navRotate);
+  nav_rotaryButton.setTapHandler(navMajorMinor);
+  nav_xferButton.setTapHandler(navXfer);
 
   // init the lcd
   lcd.init();
   lcd.backlight();
-
-  //Keyboard.begin();
-  //Gamepad.begin();
 }
 
 void loop() {
-
-  //while (!Serial) ;  // wait for Arduino Serial Monitor
-  //Gamepad.releaseAll();
-  //Gamepad.write();
   
-  rotary.loop();
-  rotaryButton.loop();
-  majorMinorButton.loop();
-  xferButton.loop();
+  com_rotary.loop();
+  com_rotaryButton.loop();
+  com_xferButton.loop();
+  
+  nav_rotary.loop();
+  nav_rotaryButton.loop();
+  nav_xferButton.loop();
   
   if(Serial.available() > 0)
   {
@@ -92,11 +99,11 @@ void ProcessMessage(String rawMessage)
   switch(code)
   {
     case COM1ACTV:
-      DisplayActiveFreq(PretifyFreq(data));
+      DisplayComActiveFreq(PretifyFreq(data));
       break;      
 
     case COM1STBY:
-      DisplayStandbyFreq(PretifyFreq(data));
+      DisplayComStandbyFreq(PretifyFreq(data));
       break;
 
     case NAV1ACTV:
@@ -130,13 +137,13 @@ String PretifyFreq(String freq)
   return freq;
 }
 
-void DisplayActiveFreq(String freq)
+void DisplayComActiveFreq(String freq)
 {
     lcd.setCursor(0,0);
     lcd.print(freq);
 }
 
-void DisplayStandbyFreq(String freq)
+void DisplayComStandbyFreq(String freq)
 {
     lcd.setCursor(9,0);
     lcd.print(freq);
@@ -164,21 +171,15 @@ void SendMsg(ActivityType type, String data)
   Serial.print(char(3));
 }
 
-// on change
-void rotate(ESPRotary& r) {
+void comRotate(ESPRotary& r) {
     
     int pos = r.getPosition();
 
-    if(pos > previousPosition)
+    if(pos > comPreviousPosition)
     {
       altSerial.println("UP");
 
-      //Keyboard.press(modifierA);
-      //Keyboard.press(modifierB);
-      //Keyboard.press(modifierC);
-      //Keyboard.press('2'); 
-
-      if(majorPostion)
+      if(comMajorPostion)
       {
         SendMsg(COM1_MAJOR_UP, "major up");  
       }
@@ -190,13 +191,8 @@ void rotate(ESPRotary& r) {
     else
     {
       altSerial.println("DOWN");
-      
-      //Keyboard.press(modifierA);
-      //Keyboard.press(modifierB);
-      //Keyboard.press(modifierC);
-      //Keyboard.press('1');
 
-      if(majorPostion)
+      if(comMajorPostion)
       {
         SendMsg(COM1_MAJOR_DOWN, "major down");  
       }
@@ -206,44 +202,61 @@ void rotate(ESPRotary& r) {
       }
     }
 
-    //delay(45);
-    //Keyboard.releaseAll();
-
-    previousPosition = pos;
-    //Serial.println("Curr: " + String(pos));
-
-}
-
-// on left or right rotation
-void downClick(ESPRotary& r) {
-  //Serial.println("Radio down"); 
-}
-
-void upClick(ESPRotary& r) {
-  //Serial.println("Radio up"); 
+    comPreviousPosition = pos;
 }
  
-// single click
-void majorMinor(Button2& btn) {
+void comMajorMinor(Button2& btn) {
 
-  majorPostion = !majorPostion;
-  altSerial.println("Major/Minor flip!" + String(majorPostion));
-
-  //Gamepad.press(1);
-  //Gamepad.write();
-  //delay(45);
-  
+  comMajorPostion = !comMajorPostion;
+  altSerial.println("Major/Minor flip!" + String(comMajorPostion));
 }
 
-// single click
-void xfer(Button2& btn) {
+void comXfer(Button2& btn) {
   SendMsg(COM1_SWAP, "swap");  
 }
 
-// long click
-void resetPosition(Button2& btn) {
-  rotary.resetPosition();
-  altSerial.println("Reset!");
+void navRotate(ESPRotary& r) {
+    
+    int pos = r.getPosition();
+
+    if(pos > navPreviousPosition)
+    {
+      altSerial.println("UP");
+
+      if(navMajorPostion)
+      {
+        SendMsg(NAV1_MAJOR_UP, "major up");  
+      }
+      else
+      {
+        SendMsg(NAV1_MINOR_UP, "minor up");
+      }
+    }
+    else
+    {
+      altSerial.println("DOWN");
+
+      if(comMajorPostion)
+      {
+        SendMsg(NAV1_MAJOR_DOWN, "major down");  
+      }
+      else
+      {
+        SendMsg(NAV1_MINOR_DOWN, "minor down");
+      }
+    }
+
+    navPreviousPosition = pos;
+}
+
+void navMajorMinor(Button2& btn) {
+
+  navMajorPostion = !navMajorPostion;
+  altSerial.println("Major/Minor flip!" + String(navMajorPostion)); 
+}
+
+void navXfer(Button2& btn) {
+  SendMsg(NAV1_SWAP, "swap");  
 }
 
 int readline(int readch, char *buffer, int len) {
