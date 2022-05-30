@@ -113,6 +113,11 @@ String PretifyFreq(String freq)
   {
     freq += "0";
   }
+  
+  // Fix the display to retain decimal point if minor is all zeros
+  if (freq.charAt(3) != '.') {
+    freq.setCharAt(3, '.');
+  }
 
   return freq;
 }
