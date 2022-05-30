@@ -51,6 +51,16 @@ namespace MSFSConnector
             {
                 _deviceControl.SendMessage(DeviceControl.MessageType.COM1STBY, simActivity.Data);
             }
+
+            if (simActivity.Variable.SimVariable == SimVars.NAV_ACTIVE_FREQUENCY && simActivity.Variable.Index == 1)
+            {
+                _deviceControl.SendMessage(DeviceControl.MessageType.NAV1ACTV, simActivity.Data);
+            }
+
+            if (simActivity.Variable.SimVariable == SimVars.NAV_STANDBY_FREQUENCY && simActivity.Variable.Index == 1)
+            {
+                _deviceControl.SendMessage(DeviceControl.MessageType.NAV1STBY, simActivity.Data);
+            }
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -150,6 +160,26 @@ namespace MSFSConnector
 
                 case DeviceControl.ActivityType.COM1_SWAP:
                     _simControl.TransmitClientEvent(EVENT_IDS.COM_STBY_RADIO_SWAP, 0, GROUPS.GROUP1, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+                    break;
+
+                case DeviceControl.ActivityType.NAV1_MAJOR_UP:
+                    _simControl.TransmitClientEvent(EVENT_IDS.NAV1_RADIO_WHOLE_INC, 0, GROUPS.GROUP1, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+                    break;
+
+                case DeviceControl.ActivityType.NAV1_MAJOR_DOWN:
+                    _simControl.TransmitClientEvent(EVENT_IDS.NAV1_RADIO_WHOLE_DEC, 0, GROUPS.GROUP1, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+                    break;
+
+                case DeviceControl.ActivityType.NAV1_MINOR_UP:
+                    _simControl.TransmitClientEvent(EVENT_IDS.NAV1_RADIO_FRACT_INC, 0, GROUPS.GROUP1, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+                    break;
+
+                case DeviceControl.ActivityType.NAV1_MINOR_DOWN:
+                    _simControl.TransmitClientEvent(EVENT_IDS.NAV1_RADIO_FRACT_DEC, 0, GROUPS.GROUP1, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+                    break;
+
+                case DeviceControl.ActivityType.NAV1_SWAP:
+                    _simControl.TransmitClientEvent(EVENT_IDS.NAV1_RADIO_SWAP, 0, GROUPS.GROUP1, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
                     break;
 
                 default:

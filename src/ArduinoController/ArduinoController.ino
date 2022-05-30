@@ -97,6 +97,14 @@ void ProcessMessage(String rawMessage)
 
     case COM1STBY:
       DisplayStandbyFreq(PretifyFreq(data));
+      break;
+
+    case NAV1ACTV:
+      DisplayNavActiveFreq(PretifyFreq(data));
+      break;      
+
+    case NAV1STBY:
+      DisplayNavStandbyFreq(PretifyFreq(data));
       break; 
 
     default:
@@ -131,6 +139,18 @@ void DisplayActiveFreq(String freq)
 void DisplayStandbyFreq(String freq)
 {
     lcd.setCursor(9,0);
+    lcd.print(freq);
+}
+
+void DisplayNavActiveFreq(String freq)
+{
+    lcd.setCursor(0,1);
+    lcd.print(freq);
+}
+
+void DisplayNavStandbyFreq(String freq)
+{
+    lcd.setCursor(9,1);
     lcd.print(freq);
 }
 

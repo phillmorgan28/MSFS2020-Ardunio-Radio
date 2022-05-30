@@ -63,9 +63,16 @@ namespace MSFSConnector
                 RegisterForEvent(EVENT_IDS.COM_RADIO_FRACT_INC);
                 RegisterForEvent(EVENT_IDS.COM_RADIO_FRACT_DEC);
                 RegisterForEvent(EVENT_IDS.COM_STBY_RADIO_SWAP);
+                RegisterForEvent(EVENT_IDS.NAV1_RADIO_WHOLE_INC);
+                RegisterForEvent(EVENT_IDS.NAV1_RADIO_WHOLE_DEC);
+                RegisterForEvent(EVENT_IDS.NAV1_RADIO_FRACT_INC);
+                RegisterForEvent(EVENT_IDS.NAV1_RADIO_FRACT_DEC);
+                RegisterForEvent(EVENT_IDS.NAV1_RADIO_SWAP);
 
                 AddRequest(new SimVar(SimVars.COM_ACTIVE_FREQUENCY, Units.Megahertz, 1));
                 AddRequest(new SimVar(SimVars.COM_STANDBY_FREQUENCY, Units.Megahertz, 1));
+                AddRequest(new SimVar(SimVars.NAV_ACTIVE_FREQUENCY, Units.Megahertz, 1));
+                AddRequest(new SimVar(SimVars.NAV_STANDBY_FREQUENCY, Units.Megahertz, 1));
             }
         }
 
